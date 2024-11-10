@@ -11,11 +11,24 @@ import time_benchmark
 # usage python3 run-all.py target-dir [output-file]
 
 TARGET_DIR = "."
+BUILD_ONLY = False
+RUN_ONLY = False
+IS_WASM = False
+OUTFILE = ""
+
+if "-b" in sys.argv or "--build" in sys.argv:
+    BUILD_ONLY = True
+if "-r" in sys.argv or "--run" in sys.argv:
+    RUN_ONLY = True
+if "-w" in sys.argv or "--wasm" in sys.argv:
+    IS_WASM = True
+
+# Remove command flags
+sys.argv = [item for item in sys.argv if not item.startswith('-')]
 
 if len(sys.argv) >= 2:
     TARGET_DIR = sys.argv[1]
 
-OUTFILE = ""
 if len(sys.argv) == 3:
     OUTFILE = sys.argv[2]
 
@@ -54,11 +67,15 @@ for cat in categories:
         kernel = dir
         target_dir = dir_path
 
-        make_command = f"cd {target_dir} && make clean && make"
-        print(make_command, file=outfile)
-        subprocess.run(make_command, shell=True, stdout=outfile)
+        if not RUN_ONLY:
+            make_command = f"cd {target_dir} && make clean && make"
+            print(make_command, file=outfile)
+            subprocess.run(make_command, shell=True, stdout=outfile)
 
-        run_command = f"cd {target_dir} && ./{kernel}"
-        time_benchmark.run_benchmark(run_command, outfile)
+        if not BUILD_ONLY:
+            run_command = f"cd {target_dir} && ./{kernel}"
+            if IS_WASM:
+                run_command = f"cd {target_dir} && wasmtime {kernel}.wasm"
+            time_benchmark.run_benchmark(run_command, outfile)
 
 outfile.close()

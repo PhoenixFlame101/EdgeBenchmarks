@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 
-# NOTE: Unlike the clean.pl script from utilities directory, this script doesn't
-# delete the Makefile from the directories
-
 import os
 import sys
 import subprocess
@@ -36,6 +33,6 @@ for cat in categories:
         if dir_name.startswith('.') or not os.path.isdir(dir_path):
             continue
 
-        command = f"cd {dir_path} && make clean"
+        command = f"cd {dir_path} && make clean && rm -f Makefile"
         print(command)
         subprocess.run(command, shell=True, check=True)

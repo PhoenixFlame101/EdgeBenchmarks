@@ -1,2 +1,8 @@
-CC=gcc
+# Native
+CC=clang
 CFLAGS=-O3 -DPOLYBENCH_TIME -DPOLYBENCH_USE_C99_PROTO
+
+# WASM
+# WASI_SDK_PATH=/home/abhinav/Downloads/wasi-sdk-24.0
+# CC=${WASI_SDK_PATH}/bin/clang
+# CFLAGS=--sysroot=${WASI_SDK_PATH}/share/wasi-sysroot -O3 -DPOLYBENCH_TIME -DPOLYBENCH_USE_C99_PROTO -D_WASI_EMULATED_PROCESS_CLOCKS
