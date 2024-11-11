@@ -81,17 +81,15 @@ for cat in categories:
             subprocess.run(make_command, shell=True, stdout=outfile)
 
         if not BUILD_ONLY:
-            cd_command = f"cd {target_dir}"
-            subprocess.run(cd_command, shell=True)
             if IS_NATIVE:
-                run_command = f"./{kernel}"
+                run_command = f"{target_dir}/{kernel}"
             if IS_WASM:
-                run_command = f"wasmtime {kernel}.wasm"
+                run_command = f"wasmtime {target_dir}/{kernel}.wasm"
             elif IS_DOCKER:
                 run_command = f"docker run --rm {kernel}"
 
             subprocess.run('mkdir -p benchmarks', shell=True)
             subprocess.run(f"hyperfine '{
-                           run_command}' --export-json benchmarks/{kernel}.json", shell=True)
+                           run_command}' --show-output --export-json benchmarks/{kernel}.json", shell=True)
 
 outfile.close()
