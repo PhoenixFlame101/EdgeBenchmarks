@@ -89,7 +89,6 @@ for cat in categories:
                 run_command = f"docker run --rm {kernel}"
 
             subprocess.run('mkdir -p benchmarks', shell=True)
-            subprocess.run(f"hyperfine '{
-                           run_command}' --show-output --export-json benchmarks/{kernel}.json", shell=True)
+            subprocess.run(f"hyperfine '{run_command}' --show-output --export-json benchmarks/{kernel}.json", shell=True)
 
 outfile.close()
