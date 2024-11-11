@@ -24,7 +24,7 @@ if not IS_WASM:
     config_file_content = \
         """# Native
 CC=clang
-CFLAGS=-O3 -DPOLYBENCH_USE_C99_PROTO
+CFLAGS=-O3 -DPOLYBENCH_TIME
 """.format(abs_target_path)
 
 if IS_WASM:
@@ -32,7 +32,7 @@ if IS_WASM:
         """# WASM
 WASI_SDK_PATH={}/wasi-sdk-24.0
 CC=${{WASI_SDK_PATH}}/bin/clang
-CFLAGS=--sysroot=${{WASI_SDK_PATH}}/share/wasi-sysroot -O3 -DPOLYBENCH_USE_C99_PROTO
+CFLAGS=--sysroot=${{WASI_SDK_PATH}}/share/wasi-sysroot -O3 -DPOLYBENCH_TIME -D_WASI_EMULATED_PROCESS_CLOCKS
 """.format(abs_target_path)
 
 categories = {
