@@ -3,17 +3,6 @@
 import os
 import sys
 
-config_file_content = \
-    """# Native
-CC=clang
-CFLAGS=-O3 -DPOLYBENCH_TIME -DPOLYBENCH_USE_C99_PROTO
-
-# WASM
-# WASI_SDK_PATH=/home/abhinav/Downloads/wasi-sdk-24.0
-# CC=${WASI_SDK_PATH}/bin/clang
-# CFLAGS=--sysroot=${WASI_SDK_PATH}/share/wasi-sysroot -O3 -DPOLYBENCH_TIME -DPOLYBENCH_USE_C99_PROTO -D_WASI_EMULATED_PROCESS_CLOCKS
-"""
-
 # Generates Makefile for each benchmark in polybench
 # Expects to be executed from root folder of polybench
 # NOTE: -cfg flag is enable by default
@@ -29,6 +18,22 @@ for arg in sys.argv[1:]:
         IS_WASM = True
     else:
         TARGET_DIR = arg
+
+abs_target_path = os.path.abspath(TARGET_DIR)
+if not IS_WASM:
+    config_file_content = \
+        """# Native
+CC=clang
+CFLAGS=-O3 -DPOLYBENCH_USE_C99_PROTO
+""".format(abs_target_path)
+
+if IS_WASM:
+    config_file_content = \
+        """# WASM
+WASI_SDK_PATH={}/wasi-sdk-24.0
+CC=${{WASI_SDK_PATH}}/bin/clang
+CFLAGS=--sysroot=${{WASI_SDK_PATH}}/share/wasi-sysroot -O3 -DPOLYBENCH_USE_C99_PROTO
+""".format(abs_target_path)
 
 categories = {
     'linear-algebra/blas': 3,
@@ -79,18 +84,18 @@ EXTRA_FLAGS={extra_flags.get(kernel, '')}
 \t$(VERBOSE) $(CC) -o {kernel} {kernel}.c $(CFLAGS) -I. -I{utility_dir} {utility_dir}/polybench.c $(EXTRA_FLAGS)
 
 clean:
-\t@ rm -f {kernel}
+\t@ rm -f {kernel}; rm -f {kernel}.wasm
 """)
             if IS_WASM:
                 file.write(f"""include {config_file}
 
 EXTRA_FLAGS={extra_flags.get(kernel, '')}
 
-{kernel}: {kernel}.c {kernel}.h
+{kernel}.wasm: {kernel}.c {kernel}.h
 \t$(VERBOSE) $(CC) -o {kernel}.wasm {kernel}.c $(CFLAGS) -I. -I{utility_dir} {utility_dir}/polybench.c $(EXTRA_FLAGS)
 
 clean:
-\t@ rm -f {kernel}.wasm
+\t@ rm -f {kernel}.wasm; rm -f {kernel}
 """)
 
 
