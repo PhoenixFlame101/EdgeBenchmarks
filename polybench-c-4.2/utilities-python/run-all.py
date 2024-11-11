@@ -3,7 +3,6 @@
 import os
 import sys
 import subprocess
-import time_benchmark
 
 # Visits every directory, calls make, and then executes the benchmark
 # (Designed for making sure every kernel compiles/runs after modifications)
@@ -13,7 +12,9 @@ import time_benchmark
 TARGET_DIR = "."
 BUILD_ONLY = False
 RUN_ONLY = False
+IS_NATIVE = True
 IS_WASM = False
+IS_DOCKER = False
 OUTFILE = ""
 
 if "-b" in sys.argv or "--build" in sys.argv:
@@ -22,6 +23,10 @@ if "-r" in sys.argv or "--run" in sys.argv:
     RUN_ONLY = True
 if "-w" in sys.argv or "--wasm" in sys.argv:
     IS_WASM = True
+    IS_NATIVE = False
+elif "-d" in sys.argv or "--docker" in sys.argv:
+    IS_DOCKER = True
+    IS_NATIVE = False
 
 # Remove command flags
 sys.argv = [item for item in sys.argv if not item.startswith('-')]
@@ -68,14 +73,25 @@ for cat in categories:
         target_dir = dir_path
 
         if not RUN_ONLY:
-            make_command = f"cd {target_dir} && make clean && make"
+            if IS_NATIVE or IS_WASM:
+                make_command = f"cd {target_dir} && make"
+            elif IS_DOCKER:
+                make_command = f"cd {target_dir} && docker build . -t {kernel}"
             print(make_command, file=outfile)
             subprocess.run(make_command, shell=True, stdout=outfile)
 
         if not BUILD_ONLY:
-            run_command = f"cd {target_dir} && ./{kernel}"
+            cd_command = f"cd {target_dir}"
+            subprocess.run(cd_command, shell=True)
+            if IS_NATIVE:
+                run_command = f"./{kernel}"
             if IS_WASM:
-                run_command = f"cd {target_dir} && wasmtime {kernel}.wasm"
-            time_benchmark.run_benchmark(run_command, outfile)
+                run_command = f"wasmtime {kernel}.wasm"
+            elif IS_DOCKER:
+                run_command = f"docker run --rm {kernel}"
+
+            subprocess.run('mkdir -p benchmarks', shell=True)
+            subprocess.run(f"hyperfine '{
+                           run_command}' --export-json benchmarks/{kernel}.json", shell=True)
 
 outfile.close()
