@@ -9,6 +9,9 @@ import subprocess
 #
 # usage python3 run-all.py target-dir [output-file]
 
+WARMPUPS = 3
+RUNS = 15
+
 TARGET_DIR = "."
 BUILD_ONLY = False
 RUN_ONLY = False
@@ -73,22 +76,28 @@ for cat in categories:
         target_dir = dir_path
 
         if not RUN_ONLY:
-            if IS_NATIVE or IS_WASM:
-                make_command = f"cd {target_dir} && make"
-            elif IS_DOCKER:
-                make_command = f"cd {target_dir} && docker build . -t {kernel}"
+            make_command = f"cd {target_dir} && make"
+            print(make_command, file=outfile)
+            subprocess.run(make_command, shell=True, stdout=outfile)
+
+            make_command = f"cd {target_dir} && docker build . -t {kernel}"
             print(make_command, file=outfile)
             subprocess.run(make_command, shell=True, stdout=outfile)
 
         if not BUILD_ONLY:
             if IS_NATIVE:
                 run_command = f"{target_dir}/{kernel}"
+                subdir = 'native'
+                subprocess.run('mkdir -p benchmarks/polybench/native', shell=True)
             if IS_WASM:
                 run_command = f"wasmtime {target_dir}/{kernel}.wasm"
-            elif IS_DOCKER:
+                subdir = 'wasm'
+                subprocess.run('mkdir -p benchmarks/polybench/wasm', shell=True)
+            if IS_DOCKER:
                 run_command = f"docker run --rm {kernel}"
+                subdir = 'docker'
+                subprocess.run('mkdir -p benchmarks/polybench/docker', shell=True)
 
-            subprocess.run('mkdir -p benchmarks', shell=True)
-            subprocess.run(f"hyperfine '{run_command}' --warmup 2 --export-json benchmarks/{kernel}.json", shell=True)
+            subprocess.run(f"hyperfine '{run_command}' --warmup {WARMPUPS} --runs {RUNS} --export-json benchmarks/polybench/{subdir}/{kernel}.json", shell=True)
 
 outfile.close()
