@@ -33,6 +33,6 @@ for cat in categories:
         if dir_name.startswith('.') or not os.path.isdir(dir_path):
             continue
 
-        command = f"cd {dir_path} && make clean; rm -f Makefile; rm -f Dockerfile"
+        command = f"cd {dir_path} && make clean"
         print(command)
         subprocess.run(command, shell=True)
