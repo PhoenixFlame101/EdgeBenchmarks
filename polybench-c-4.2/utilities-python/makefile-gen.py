@@ -20,19 +20,15 @@ for arg in sys.argv[1:]:
         TARGET_DIR = arg
 
 abs_target_path = os.path.abspath(TARGET_DIR)
-if not IS_WASM:
-    config_file_content = \
-        """# Native
+config_file_content = \
+"""# Native
 CC=clang
 CFLAGS=-O3 -DPOLYBENCH_TIME
-""".format(abs_target_path)
 
-if IS_WASM:
-    config_file_content = \
-        """# WASM
+# WASM
 WASI_SDK_PATH={}/wasi-sdk-24.0
-CC=${{WASI_SDK_PATH}}/bin/clang
-CFLAGS=--sysroot=${{WASI_SDK_PATH}}/share/wasi-sysroot -O3 -DPOLYBENCH_TIME -D_WASI_EMULATED_PROCESS_CLOCKS
+CC_WASM=${{WASI_SDK_PATH}}/bin/clang
+CFLAGS_WASM=--sysroot=${{WASI_SDK_PATH}}/share/wasi-sysroot -O3 -DPOLYBENCH_TIME -D_WASI_EMULATED_PROCESS_CLOCKS
 """.format(abs_target_path)
 
 categories = {
@@ -75,27 +71,20 @@ for key, depth in categories.items():
             # Change -o flag depending on if WASM is set or not
             # The output file has a .wasm extension if it's set
 
-            if not IS_WASM:
-                file.write(f"""include {config_file}
+            file.write(f"""include {config_file}
 
 EXTRA_FLAGS={extra_flags.get(kernel, '')}
+
+all: {kernel} {kernel}.wasm
 
 {kernel}: {kernel}.c {kernel}.h
 \t$(VERBOSE) $(CC) -o {kernel} {kernel}.c $(CFLAGS) -I. -I{utility_dir} {utility_dir}/polybench.c $(EXTRA_FLAGS)
 
-clean:
-\t@ rm -f {kernel}; rm -f {kernel}.wasm
-""")
-            if IS_WASM:
-                file.write(f"""include {config_file}
-
-EXTRA_FLAGS={extra_flags.get(kernel, '')}
-
 {kernel}.wasm: {kernel}.c {kernel}.h
-\t$(VERBOSE) $(CC) -o {kernel}.wasm {kernel}.c $(CFLAGS) -I. -I{utility_dir} {utility_dir}/polybench.c $(EXTRA_FLAGS)
+\t$(VERBOSE) $(CC_WASM) -o {kernel}.wasm {kernel}.c $(CFLAGS_WASM) -I. -I{utility_dir} {utility_dir}/polybench.c $(EXTRA_FLAGS)
 
 clean:
-\t@ rm -f {kernel}.wasm; rm -f {kernel}
+\t@ rm -f {kernel} {kernel}.wasm
 """)
 
 
