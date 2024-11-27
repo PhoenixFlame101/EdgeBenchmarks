@@ -1,0 +1,16 @@
+spin_manifest_version = 2
+
+[application]
+name = "hough-transform"
+version = "0.1.0"
+
+[[trigger.http]]
+route = "/upload"
+component = "hough-transform"
+
+[component.hough-transform]
+source = "target/wasm32-wasip1/release/hough_transform.wasm"
+allowed_outbound_hosts = []
+[component.hough-transform.build]
+command = "cargo build --target wasm32-wasip1 --release"
+watch = ["src/**/*.rs", "Cargo.toml"]

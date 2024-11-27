@@ -1,0 +1,25 @@
+[package]
+name = "hough-transform"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[[bin]]
+name = "hough-transform"
+path = "src/main.rs"
+
+[dependencies]
+image = "0.25.5"
+imageproc = "0.25.0"
+serde = { version = "1.0.215", features = ["derive"] }
+serde_json = "1.0.133"
+
+[target.'cfg(target_family = "wasm")'.dependencies]
+anyhow = "1"
+spin-sdk = "3.1.0"
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+tokio = { version = "1.41.1", features = ["full"] }
+warp = "0.3.7"
