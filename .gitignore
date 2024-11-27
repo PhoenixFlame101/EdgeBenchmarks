@@ -1,6 +1,7 @@
 # Build artifacts (PolyBench)
 polybench-c-4.2/bin
 polybench-c-4.2/benchmarks
+polybench-c-4.2/config.mk
 
 # WASI SDK
 polybench-c-4.2/wasi-sdk-24.0
