@@ -1,0 +1,16 @@
+spin_manifest_version = 2
+
+[application]
+name = "spectrogram-generator"
+version = "0.1.0"
+
+[[trigger.http]]
+route = "/upload"
+component = "spectrogram-generator"
+
+[component.spectrogram-generator]
+source = "target/wasm32-wasip1/release/spectrogram_generator.wasm"
+allowed_outbound_hosts = []
+[component.spectrogram-generator.build]
+command = "cargo build --target wasm32-wasip1 --release"
+watch = ["src/**/*.rs", "Cargo.toml"]
