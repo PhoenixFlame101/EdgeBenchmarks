@@ -89,11 +89,11 @@ for cat in categories:
                 run_command = f"{target_dir}/{kernel}"
                 subdir = 'native'
                 subprocess.run('mkdir -p benchmarks/polybench/native', shell=True)
-            if IS_WASM:
+            elif IS_WASM:
                 run_command = f"wasmtime {target_dir}/{kernel}.wasm"
                 subdir = 'wasm'
                 subprocess.run('mkdir -p benchmarks/polybench/wasm', shell=True)
-            if IS_DOCKER:
+            elif IS_DOCKER:
                 run_command = f"docker run --rm {kernel}"
                 subdir = 'docker'
                 subprocess.run('mkdir -p benchmarks/polybench/docker', shell=True)
