@@ -13,6 +13,7 @@ WARMPUPS = 3
 RUNS = 15
 
 TARGET_DIR = "."
+START_FROM = ""
 BUILD_ONLY = False
 RUN_ONLY = False
 IS_NATIVE = True
@@ -20,6 +21,8 @@ IS_WASM = False
 IS_DOCKER = False
 OUTFILE = ""
 
+if "-f" in sys.argv:
+    START_FROM = sys.argv[sys.argv.index('-f')+1]
 if "-b" in sys.argv or "--build" in sys.argv:
     BUILD_ONLY = True
 if "-r" in sys.argv or "--run" in sys.argv:
@@ -30,23 +33,26 @@ if "-w" in sys.argv or "--wasm" in sys.argv:
 elif "-d" in sys.argv or "--docker" in sys.argv:
     IS_DOCKER = True
     IS_NATIVE = False
+elif "-a" in sys.argv or "--all" in sys.argv:
+    IS_WASM = True
+    IS_DOCKER = True
 
 # Remove command flags
 sys.argv = [item for item in sys.argv if not item.startswith('-')]
 
-if len(sys.argv) >= 2:
-    TARGET_DIR = sys.argv[1]
+# if len(sys.argv) >= 2:
+#     TARGET_DIR = sys.argv[1]
 
-if len(sys.argv) == 3:
-    OUTFILE = sys.argv[2]
+# if len(sys.argv) == 3:
+#     OUTFILE = sys.argv[2]
 
 categories = [
+    'datamining',
     'linear-algebra/blas',
     'linear-algebra/kernels',
     'linear-algebra/solvers',
-    'datamining',
-    'stencils',
-    'medley'
+    'medley',
+    'stencils'
 ]
 
 if OUTFILE:
@@ -54,6 +60,7 @@ if OUTFILE:
 else:
     outfile = sys.stdout
 
+started = not START_FROM
 for cat in categories:
     target = os.path.join(TARGET_DIR, cat)
     if not os.path.isdir(target):
@@ -61,12 +68,17 @@ for cat in categories:
         sys.exit(1)
 
     try:
-        dirs = os.listdir(target)
+        dirs = sorted(os.listdir(target))
     except OSError:
         print(f"Error reading directory {target}.", file=outfile)
         sys.exit(1)
 
     for dir in dirs:
+        if START_FROM == dir:
+            started = True
+        if not started:
+            continue
+
         dir_path = os.path.join(target, dir)
         # Skip hidden files and non-directories
         if dir.startswith('.') or not os.path.isdir(dir_path):
@@ -85,19 +97,21 @@ for cat in categories:
             subprocess.run(make_command, shell=True, stdout=outfile)
 
         if not BUILD_ONLY:
+            run_commands = []
             if IS_NATIVE:
-                run_command = f"{target_dir}/{kernel}"
+                run_commands.append(f"{target_dir}/{kernel}")
                 subdir = 'native'
                 subprocess.run('mkdir -p benchmarks/polybench/native', shell=True)
-            elif IS_WASM:
-                run_command = f"wasmtime {target_dir}/{kernel}.wasm"
+            if IS_WASM:
+                run_commands.append(f"wasmtime {target_dir}/{kernel}.wasm")
                 subdir = 'wasm'
                 subprocess.run('mkdir -p benchmarks/polybench/wasm', shell=True)
-            elif IS_DOCKER:
-                run_command = f"docker run --rm {kernel}"
+            if IS_DOCKER:
+                run_commands.append(f"docker run --rm {kernel}")
                 subdir = 'docker'
                 subprocess.run('mkdir -p benchmarks/polybench/docker', shell=True)
 
-            subprocess.run(f"hyperfine '{run_command}' --warmup {WARMPUPS} --runs {RUNS} --export-json benchmarks/polybench/{subdir}/{kernel}.json", shell=True)
+            for i in range(sum((IS_NATIVE, IS_WASM, IS_DOCKER))):
+                subprocess.run(f"hyperfine '{run_commands[i]}' --warmup {WARMPUPS} --runs {RUNS} --export-json benchmarks/polybench/{subdir}/{kernel}.json", shell=True)
 
 outfile.close()
