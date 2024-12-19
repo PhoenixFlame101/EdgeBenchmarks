@@ -14,6 +14,7 @@ RUNS = 15
 
 TARGET_DIR = "."
 START_FROM = ""
+TARGET_BENCH = ""
 BUILD_ONLY = False
 RUN_ONLY = False
 IS_NATIVE = True
@@ -23,6 +24,8 @@ OUTFILE = ""
 
 if "-f" in sys.argv:
     START_FROM = sys.argv[sys.argv.index('-f')+1]
+if "-t" in sys.argv:
+    TARGET_BENCH = sys.argv[sys.argv.index('-t')+1]
 if "-b" in sys.argv or "--build" in sys.argv:
     BUILD_ONLY = True
 if "-r" in sys.argv or "--run" in sys.argv:
@@ -77,6 +80,9 @@ for cat in categories:
         if START_FROM == dir:
             started = True
         if not started:
+            continue
+
+        if TARGET_BENCH and dir != TARGET_BENCH:
             continue
 
         dir_path = os.path.join(target, dir)
